@@ -11,7 +11,7 @@ output:
 knitr::opts_chunk$set(echo = TRUE)
 
 # Setting my root directory to where I have my /data folder etc. (easier for me, but personalise to your own way of working)
-knitr::opts_knit$set(root.dir = "/Users/pernillebrams/Desktop/AARHUS_UNIVERSITY/instructor_2024/methods-2")
+knitr::opts_knit$set(root.dir = "/Users/rahel/Desktop/Methods 2/resources/class2")
 
 ```
 
@@ -30,8 +30,10 @@ Loops can be good for simulating. And they are cool. Let's practice is a bit.
 
 ## Exercises to practise loops (discuss with partner/group if you want to)
 ### Ex. A: What is the difference between a for- and a while loop? Explain in your own words in 1-2 sentences.
+A for loop runs a special amount of time. A while loop runs until a special condition is no longer true
 
 ### Ex. B: When would you use for-loops and when would you use while-loops? Explain in your own words in 1-2 sentences
+I would use a for-loop when i now how often the loop should run and a while loop, when it only should run until a condition changes
 
 ### Ex. C: Create and run both a simple for and a while loop
 I've made an example below. Make your own example below it. If you have no ideas for what to code in your for loop, here's an example you can try to code up:
@@ -42,6 +44,9 @@ for (i in 1:10){ # For each i in 1:10...
   print(i+5)    # Do this..
 }
 
+for (i in 1:20){
+  if (i > 3) {print(i)}
+}
 # your simple loop here
 ```
 
@@ -55,7 +60,14 @@ while (number < 10){ # While the number is below 10, do the following
   number = number + 1
 }
 
+
 # your simple while-loop here
+some_number = 7
+while(some_number < 20){
+  print('the number is under 20 so i still run')
+  print(some_number)
+  some_number = some_number + 1
+}
 ```
 
 ## Exercises to practise functions and if-else statements
@@ -64,10 +76,10 @@ Create a function that accepts a temperature in Fahrenheit and returns the tempe
 ```{r}
 # Function to convert Fahrenheit to Celsius
 convert_to_celsius <- function(fahrenheit) {
-  # Your code here
-  # Hint: Apply the conversion formula within the function
-}
+  (fahrenheit-32)*5/9
 
+}
+convert_to_celsius(68)
 # Example of how the final function (when you've written it) should be used:
 # temp_celsius <- convert_to_celsius(68)
 # print(temp_celsius)
@@ -87,13 +99,18 @@ Use statements if, else if, and else. Google how to set up the syntax with curly
 ```{r}
 # Function to give clothing advice based on temperature
 clothing_advice <- function(temperature) {
-  # Your code here
-  # Hint: Use if-else statements to check the temperature and return the advice
+  if (temperature > 25 ) {
+    print('You should wear a T-shirt')
+  } else if (temperature <= 25 & temperature >= 15){
+    print('You should war a light jacket!')
+  }else print('You should wear a warm coat!')
+  
 }
 
+
 # Example of how the final function (when you've written it) should be used:
-# advice <- clothing_advice(20)
-# print(advice)
+advice <- clothing_advice(20)
+print(advice)
 # Expected Output (for temperature = 20): "Wear a light jacket."
 
 ```
@@ -101,6 +118,60 @@ clothing_advice <- function(temperature) {
 ## Exercises from the book
 
 ## Ex. 0: Write up / copy the code found on page 69-70 in chapter 5 ROS and note whats going on at each step. The book explains it - so just go through it and discuss with your group to understand whats going on.
+```{r}
+# simulate 400 births and figure out how many are girls
+n_girls <- rbinom(1,400,0.488) # prob of girls birth is 48.8%
+print(n_girls)
+
+# get sense of distribution-> simulate 1000 times
+n_sims <- 1000
+n_girls <- rep(NA, n_sims)
+for (s in 1:n_sims){
+  n_girls[s] <- rbinom(1,400,0.488)
+}
+hist(n_girls)
+#n_girls <- rbinom(n_sims, 400, 0.488) # also possible
+
+# accounting for twins
+birth_type <- sample(c('fraternal twin','identical twin','single birth'),
+       size = 400, replace = TRUE, prob = c(1/125,1/300,1-1/125-1/300))
+girls <- rep(NA,400)
+for (i in 1:400){
+if (birth_type[i]=="single birth") {
+    girls[i] <- rbinom(1,1,0.488)
+  } else if (birth_type[i] == 'identical twin'){
+    girls[i] <- 2*rbinom(1,1,0.495)
+  } else if (birth_type[i] == 'fraternal twin'){
+    girls[i] <- rbinom(1,2,0.495)
+  }
+}
+n_girls <- sum(girls)
+
+# same without loop
+girls <- ifelse(birth_type=="single birth", rbinom(400, 1, 0.488),
+ifelse(birth_type=="identical twin", 2*rbinom(400, 1, 0.495),
+rbinom(400, 2, 0.495)))
+# approximate distribution
+n_sims <- 1000 # spezify number for repeated simulations
+n_girls <- rep(NA, n_sims) # count variable 
+for (s in 1:n_sims){
+birth_type <- sample(c("fraternal twin","identical twin","single birth"),
+size=400, replace=TRUE, prob=c(1/125, 1/300, 1 - 1/125 - 1/300))
+girls <- rep(NA, 400)
+for (i in 1:400) {
+if (birth_type[i]=="single birth") {
+girls[i] <- rbinom(1, 1, 0.488)
+} else if (birth_type[i]=="identical twin") {
+girls[i] <- 2*rbinom(1, 1, 0.495)
+} else if (birth_type[i]=="fraternal twin") {
+girls[i] <- rbinom(1, 2, 0.495)
+}
+}
+n_girls[s] <- sum(girls) # summarize count of loop to count variable
+}
+hist(n_girls)
+```
+
 
 ### Ex. 5.1 Discrete probability simulation: Suppose that a basketball player has a 60% chance of making a shot, and he keeps taking shots until he misses two in a row. Also assume his shots are independent (so that each shot has 60% probability of success, no matter what happened before).
 * Hint 3 and 4
@@ -122,72 +193,177 @@ We need to record:
 Let's try and write a function:
 ```{r}
 # Function to simulate basketball player
-basketball <- function(){ # starting the function for you
-  
-  # your code here
-  
+
+basketball <- function(){
+  miss = 0
+  score = 0
+  shots = 0
+  while ( miss < 2){
+    shots <-  shots + 1
+    hit <- rbinom(1,1,0.6)
+    if (hit == 1){
+      score <- score +1
+      miss <- 0
+    } else miss = miss +1}
+  results <- c(shots,score)
+ return(results)
 }
 # Example usage of the function, when done
-# basket_sim <- basketball(printing = TRUE)
-
+basket_sim <- replicate(100,basketball())
+hist(basket_sim)
 ```
 
 #### Ex. 5.1.b) Put the R function in a loop to simulate the process 1000 times. Use the simulation to estimate the mean and standard deviation of the total number of shots that the player will take, and plot a histogram representing the distribution of this random variable. 
 ```{r}
-# your code here
+
+basket_sim_loop <- data.frame(Shots = numeric() ,Score = numeric())
+for (i in 1: 1000){
+  result <- basketball()
+  new_row <- data.frame(Shots= result[1], Score = result[2])
+  basket_sim_loop <- rbind(basket_sim_loop,new_row)
+}
+mean(basket_sim_loop$Shots)
+sd(basket_sim_loop$Shots)
+hist(basket_sim_loop$Shots)
 ```
 
 #### Ex. 5.1.c) Using your simulations, make a scatterplot of the number of shots the player will take and the proportion of shots that are successes.
 ```{r}
-# your code here
+basket_sim_loop <- basket_sim_loop %>% mutate(Ratio = Score/Shots*100)
+  Scatter_basket_sim <- ggplot(basket_sim_loop, aes(x = basket_sim_loop$Shots,y = basket_sim_loop$Ratio))+
+  geom_point(color = 'blue' )+
+    labs(y = '% of throws beeing successful',
+         x = 'overall shots taken')
+Scatter_basket_sim
 ```
 
 ### Ex. 5.3: Binomial distribution: A player takes 10 basketball shots, with a 40% probability of making each shot. Assume the outcomes of the shots are independent.
 #### Ex. 5.3.a) Write a line of R code to compute the probability that the player makes exactly 3 of the 10 shots.
 ```{r}
-# your code here
+three_outof_ten <- dbinom(3,10,0.4)
+
 ```
 
 #### Ex. 5.3.b) Write an R function to simulate the 10 shots. Loop this function 10 000 times and check that your simulated probability of making exactly 3 shots is close to the exact probability computed in (a).
 ```{r}
-# your code here
+sim_10 <- function(){
+  score =0
+  for (i in 1:10){
+hit <- rbinom(1,1,0.4)
+  if (hit == 1){
+    score = score +1
+  } else score = score}
+  return(score)
+}
+# loop it
+n_sims= 10000
+score_count <- rep(NA,n_sims)
+for (s in 1:n_sims){
+  score_count[s] <- sim_10()
+}
+hist(score_count)
+counting <- sum(score_count==3)
+prob_three_hits <- counting/n_sims
+prob_three_hits
+three_outof_ten
 ```
 
 ## Ex. 5.4: Demonstration of the Central Limit Theorem: Let x = x1 + · · · + x20, the sum of 20 independent uniform(0, 1) random variables. In R, create 1000 simulations of x and plot their histogram. What is the normal approximation to this distribution provided by the Central Limit Theorem? Overlay a graph of the normal density on top of the histogram. Comment on any differences between the histogram and the curve.
 
 (Recall the Central limit theorem (CLT) on the bottom of page 51 and from Methods 1)
 ```{r}
-# your code here
+sum_of_20 <-function(){
+  sum = 0
+  for (x in 1:20){
+  random <- rbinom(1,1,0.5)
+  sum <- sum + random}
+  return(sum)
+}
+# simulate x
+n_sims <- 1000
+sim_x <- rep(NA,n_sims)
+  for (i in 1:n_sims){
+  sim_x[i] <- sum_of_20()
+}
+df <- data.frame(values = sim_x)
+df %>% ggplot(aes(x = values))+
+  geom_density()+
+  stat_function(fun = dnorm, args = list(mean=mean(sim_x), sd = sd(sim_x)),
+                color = 'plum', size = 1)
 ```
 
 ## Ex. 5.5: Distribution of averages and differences: The heights of men in the United States are approximately normally distributed with mean 69.1 inches and standard deviation 2.9 inches. The heights of women are approximately normally distributed with mean 63.7 inches and standard deviation 2.7 inches. Let x be the average height of 100 randomly sampled men, and y be the average height of 100 randomly sampled women. In R, create 1000 simulations of x − y and plot their histogram. Using the simulations, compute the mean and standard deviation of the distribution of x − y and compare to their exact values.
 *Hint 1
 
 ```{r}
-# your code here
+# compute heights of men
+n_sims= 1000
+height_dif_sims <-rep(NA,n_sims)
+for (i in 1:n_sims){
+  avg_men<- rnorm(100,69.1,2.9)
+  x <- mean(avg_men)
+  avg_women <- rnorm(100,mean = 63.7, sd = 2.7)
+  y <- mean(avg_women)
+  height_dif_sims[i] <- (x-y)
+}
+hist(height_dif_sims)
+mean(height_dif_sims)
+sd(height_dif_sims)
 ```
 
 ## Ex. 5.8: Coverage of confidence intervals: On page 15 there is a discussion of an experimental study of an education-related intervention in Jamaica, in which the point estimate of the treatment effect, on the log scale, was 0.35 with a standard error of 0.17. Suppose the true effect is 0.10 — this seems more realistic than the point estimate of 0.35 — so that the treatment on average would increase earnings by 0.10 on the log scale. Use simulation to study the statistical properties of this experiment, assuming the standard error is 0.17.
 *Hint 2
 
-```{r}
-# your code here
-```
-
 #### Ex. 5.8.a) Simulate 1000 independent replications of the experiment assuming that the point estimate is normally distributed with mean 0.10 and standard deviation 0.17.
 (In the experiment on page 15, we see n = 127 children)
 ```{r}
-# your code here
+
+
+df_sims <- data.frame(V1= rlnorm(127,meanlog= 0.10,sdlog= 0.17))-1
+for (i in 2:1000){
+  df_sims[,i] <-rlnorm(127,meanlog= 0.10,sdlog= 0.17)-1 #why do i have to do the shifting with -1?!
+}
 ```
 
 #### Ex. 5.8.b) For each replication, compute the 95% confidence interval. Check how many of these intervals include the true parameter value.
 ```{r}
-# your code here
+
+conf_int <- function(x){
+  mean_value <-  mean(x) # compute mean
+  n <-  length(x)
+  standard_deviation <-  sd(x)
+  standard_error <-  standard_deviation/sqrt(n)
+  alpha = 0.05
+  dof = n-1
+  t_score <- qt(p= alpha/2,df = dof, lower.tail = F)
+  margin_error <- t_score*standard_error
+  #calculate lower and upper bound
+  lower_bound <- mean_value - margin_error
+  upper_bound <- mean_value + margin_error
+  result <- c(lower_bound,upper_bound)
+  return(result)
+}
+
+
+#loop 1000 times
+lower_ci <- c()
+upper_ci <- c()
+for (i in 1:1000){
+  lower_ci[i] <- conf_int(df_sims[,i])[1] #again not sure about df sims why [,i]??
+  upper_ci[i] <- conf_int(df_sims[,i])[2]
+}
+paste('Number of simulations that contain the true value in 95% confidence interval=',sum(upper_ci>=0.10 & lower_ci<= 0.10))
 ```
 
 #### Ex. 5.9: Coverage of confidence intervals after selection on statistical significance: Take your 1000 simulations from Exercise 5.8, and select just the ones where the estimate is statistically significantly different from zero. Compute the average and standard deviation of the selected point estimates. Compare these to the result from Exercise 5.8.
 ```{r}
-# your code here
+temp <- c()
+# loop trough each column in df_sim
+for (i in 1:ncol(df_sims)){
+  #run test and save result in temp[]
+  temp[i] <- t.test(df_sims[,i],mu=0, alternative = "greater")$p.value
+}
+sum(temp>=0)
 ```
 
 # Hints
